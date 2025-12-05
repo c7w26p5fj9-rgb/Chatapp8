@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Chat personalizzabile</title>
+  <title>Chat PRO (emoji + foto/video)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
@@ -93,11 +93,56 @@
       margin-top: 4px;
     }
 
+    .media {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 4px;
+    }
+
+    video.media {
+      max-height: 200px;
+    }
+
+    .reactions {
+      margin-top: 4px;
+      font-size: 14px;
+    }
+
+    .reactions span {
+      margin-right: 4px;
+    }
+
+    .reaction-buttons {
+      margin-top: 4px;
+      font-size: 14px;
+    }
+
+    .reaction-buttons button {
+      border: none;
+      background: transparent;
+      padding: 0 4px;
+      font-size: 16px;
+    }
+
     #typing {
       font-size: 12px;
       padding-left: 12px;
       color: #555;
       min-height: 16px;
+    }
+
+    .emoji-bar {
+      padding: 4px 8px;
+      background: rgba(255,255,255,0.9);
+      border-top: 1px solid #ddd;
+      display: flex;
+      gap: 6px;
+    }
+
+    .emoji-bar button {
+      border: none;
+      background: transparent;
+      font-size: 20px;
     }
 
     form {
@@ -106,6 +151,7 @@
       background: rgba(255,255,255,0.9);
       border-top: 1px solid #ddd;
       gap: 6px;
+      align-items: center;
     }
 
     input[type="text"] {
@@ -117,7 +163,7 @@
       outline: none;
     }
 
-    button {
+    button.send-btn {
       padding: 8px 14px;
       border-radius: 20px;
       border: none;
@@ -127,8 +173,9 @@
       font-weight: 600;
     }
 
-    button:active {
-      opacity: 0.8;
+    .attach-label {
+      font-size: 20px;
+      padding: 4px;
     }
 
     .settings {
@@ -180,9 +227,18 @@
     <ul id="messages"></ul>
     <div id="typing"></div>
 
+    <div class="emoji-bar">
+      <button type="button" class="emoji-btn">😀</button>
+      <button type="button" class="emoji-btn">❤️</button>
+      <button type="button" class="emoji-btn">😂</button>
+      <button type="button" class="emoji-btn">👍</button>
+    </div>
+
     <form id="form">
+      <label for="fileInput" class="attach-label">📎</label>
+      <input id="fileInput" type="file" accept="image/*,video/*" style="display:none">
       <input id="input" type="text" placeholder="Scrivi un messaggio...">
-      <button type="submit">Invia</button>
+      <button type="submit" class="send-btn">Invia</button>
     </form>
 
     <div class="settings">
@@ -201,6 +257,9 @@
       <div class="settings-row">
         <label>Sfondo (galleria)</label>
         <input type="file" id="bgInput" accept="image/*">
+      </div>
+      <div style="font-size:10px;color:#777;margin-top:2px;">
+        (Foto/video e sfondo vengono salvati solo per test, non per file molto grandi)
       </div>
     </div>
   </div>
@@ -231,13 +290,14 @@
     const messagesRef = db.ref("rooms/" + room + "/messages");
     const typingRef = db.ref("rooms/" + room + "/typing");
 
-    // ----- ELEMENTI CHAT -----
+    // ----- ELEMENTI BASE -----
     const nameInput   = document.getElementById("nameInput");
     const messagesList = document.getElementById("messages");
     const input       = document.getElementById("input");
     const form        = document.getElementById("form");
     const typingDiv   = document.getElementById("typing");
     const appDiv      = document.getElementById("app");
+    const fileInput   = document.getElementById("fileInput");
 
     function getName() {
       return nameInput.value.trim() || "Anonimo";
@@ -260,7 +320,7 @@
 
     function loadTheme() {
       try {
-        const saved = localStorage.getItem("chatTheme");
+        const saved = localStorage.getItem("chatThemeV2");
         if (!saved) return DEFAULT_THEME;
         const parsed = JSON.parse(saved);
         return Object.assign({}, DEFAULT_THEME, parsed);
@@ -288,7 +348,7 @@
     }
 
     function saveTheme(theme) {
-      localStorage.setItem("chatTheme", JSON.stringify(theme));
+      localStorage.setItem("chatThemeV2", JSON.stringify(theme));
     }
 
     let currentTheme = loadTheme();
@@ -321,45 +381,149 @@
       reader.readAsDataURL(file);
     });
 
-    // ----- INVIO MESSAGGI -----
+    // ----- EMOJI BAR -----
+    document.querySelectorAll(".emoji-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        input.value += btn.textContent;
+        input.focus();
+      });
+    });
+
+    // ----- INVIO TESTO -----
     form.addEventListener("submit", e => {
       e.preventDefault();
       const text = input.value.trim();
-      if (!text) return;
+      if (!text && !fileInput.files[0]) return;
 
+      if (fileInput.files[0]) {
+        sendMediaMessage(fileInput.files[0], text);
+      } else {
+        sendTextMessage(text);
+      }
+    });
+
+    function sendTextMessage(text) {
       const msg = {
         name: getName(),
+        type: "text",
         text: text,
         createdAt: Date.now()
       };
-
       messagesRef.push(msg);
       input.value = "";
+    }
+
+    function sendMediaMessage(file, caption) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const dataUrl = e.target.result;
+        const isVideo = file.type.startsWith("video/");
+        const msg = {
+          name: getName(),
+          type: "media",
+          mediaType: isVideo ? "video" : "image",
+          mediaData: dataUrl,
+          text: caption || "",
+          createdAt: Date.now()
+        };
+        messagesRef.push(msg);
+        input.value = "";
+        fileInput.value = "";
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // clic sul 📎 apre la scelta file
+    document.querySelector(".attach-label").addEventListener("click", () => {
+      fileInput.click();
     });
 
     // ----- RICEZIONE MESSAGGI -----
-    messagesRef.on("child_added", snap => {
-      const msg = snap.val();
-      const li = document.createElement("li");
+    function renderOrUpdateMessage(snapshot) {
+      const msg = snapshot.val();
+      const id = snapshot.key;
 
+      let li = messagesList.querySelector('li[data-id="' + id + '"]');
+      if (!li) {
+        li = document.createElement("li");
+        li.dataset.id = id;
+        messagesList.appendChild(li);
+      }
+      li.innerHTML = "";
       if (msg.name === getName()) {
         li.classList.add("me");
+      } else {
+        li.classList.remove("me");
       }
 
-      const textSpan = document.createElement("div");
-      textSpan.textContent = msg.name + ": " + msg.text;
+      // contenuto
+      const textDiv = document.createElement("div");
+      if (msg.type === "media" && msg.mediaData) {
+        if (msg.mediaType === "image") {
+          const img = document.createElement("img");
+          img.src = msg.mediaData;
+          img.className = "media";
+          textDiv.textContent = msg.name + ": " + (msg.text || "");
+          li.appendChild(textDiv);
+          li.appendChild(img);
+        } else {
+          const vid = document.createElement("video");
+          vid.src = msg.mediaData;
+          vid.className = "media";
+          vid.controls = true;
+          textDiv.textContent = msg.name + ": " + (msg.text || "");
+          li.appendChild(textDiv);
+          li.appendChild(vid);
+        }
+      } else {
+        textDiv.textContent = msg.name + ": " + (msg.text || "");
+        li.appendChild(textDiv);
+      }
 
-      const timeSpan = document.createElement("div");
-      timeSpan.className = "time";
+      const timeDiv = document.createElement("div");
+      timeDiv.className = "time";
       const d = new Date(msg.createdAt || Date.now());
-      timeSpan.textContent = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      timeDiv.textContent = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      li.appendChild(timeDiv);
 
-      li.appendChild(textSpan);
-      li.appendChild(timeSpan);
+      // reactions
+      if (msg.reactions) {
+        const reactionsDiv = document.createElement("div");
+        reactionsDiv.className = "reactions";
+        Object.entries(msg.reactions).forEach(([emoji, count]) => {
+          const span = document.createElement("span");
+          span.textContent = emoji + " " + count;
+          reactionsDiv.appendChild(span);
+        });
+        li.appendChild(reactionsDiv);
+      }
 
-      messagesList.appendChild(li);
+      const reactDiv = document.createElement("div");
+      reactDiv.className = "reaction-buttons";
+      ["👍", "❤️", "😂"].forEach(emoji => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = emoji;
+        btn.addEventListener("click", () => addReaction(id, emoji));
+        reactDiv.appendChild(btn);
+      });
+      li.appendChild(reactDiv);
+
       messagesList.scrollTop = messagesList.scrollHeight;
-    });
+    }
+
+    messagesRef.on("child_added", renderOrUpdateMessage);
+    messagesRef.on("child_changed", renderOrUpdateMessage);
+
+    // ----- REACTION -----
+    function addReaction(messageId, emoji) {
+      const reactRef = messagesRef.child(messageId).child("reactions");
+      reactRef.transaction(current => {
+        current = current || {};
+        const currentCount = current[emoji] || 0;
+        return Object.assign({}, current, { [emoji]: currentCount + 1 });
+      });
+    }
 
     // ----- "STA SCRIVENDO" -----
     let typingTimeout;
