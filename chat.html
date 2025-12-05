@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root {
+      --app-bg: #e5ddd5;
+      --header-bg: #075E54;
+      --my-msg-bg: #dcf8c6;
+      --other-msg-bg: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--app-bg);
+    }
+    .app {
+      max-width: 600px;
+      margin: 0 auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: rgba(240,240,240,0.9);
+      border-left: 1px solid #bfbfbf;
+      border-right: 1px solid #bfbfbf;
+      background-size: cover;
+      background-position: center;
+    }
+
+    header {
+      padding: 8px 10px;
+      background: var(--header-bg);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #128C7E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+      border: 2px solid rgba(255,255,255,0.8);
+      overflow: hidden;
+    }
+    .header-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .header-title {
+      display: flex;
+      flex-direction: column;
+    }
+    .header-title .name {
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .header-title .status {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+    #callFromChatBtn {
+      border: none;
+      background: #25D366;
+      color: white;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .name-bar {
+      font-size: 12px;
+      padding: 4px 10px;
+      color: #555;
+      border-bottom: 1px solid #ddd;
+      background: rgba(249,249,249,0.95);
+    }
+    .name-bar input {
+      width: 100%;
+      padding: 6px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    #messages {
+      flex: 1;
+      list-style: none;
+      margin: 0;
+      padding: 10px 8px;
+      overflow-y: auto;
+    }
+    .msg-row {
+      display: flex;
+      margin-bottom: 8px;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    .msg-row.me {
+      justify-content: flex-end;
+    }
+    .msg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #c4c4c4;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .msg-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .msg-bubble {
+      max-width: 75%;
+      padding: 7px 9px;
+      border-radius: 12px;
+      background: var(--other-msg-bg);
+      font-size: 14px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+    .msg-row.me .msg-bubble {
+      background: var(--my-msg-bg);
+    }
+    .msg-name {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 2px;
+      color: #075E54;
+    }
+    .msg-text {
+      font-size: 14px;
+    }
+    .media {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 4px;
+      display: block;
+    }
+    .msg-meta {
+      font-size: 10px;
+      color: #666;
+      margin-top: 4px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
+    }
+    .tick {
+      font-size: 12px;
+    }
+
+    .reactions {
+      margin-top: 4px;
+      font-size: 14px;
+    }
+    .reactions span {
+      margin-right: 4px;
+    }
+    .reaction-buttons {
+      margin-top: 2px;
+      font-size: 14px;
+      text-align: right;
+    }
+    .reaction-buttons button {
+      border: none;
+      background: transparent;
+      padding: 0 4px;
+      font-size: 16px;
+    }
+
+    #typing {
+      padding: 0 10px 4px 10px;
+      font-size: 12px;
+      color: #555;
+      min-height: 16px;
+    }
+
+    .emoji-bar {
+      padding: 4px 8px;
+      background: rgba(255,255,255,0.95);
+      border-top: 1px solid #ddd;
+      display: flex;
+      gap: 6px;
+    }
+    .emoji-bar button {
+      font-size: 20px;
+      border: none;
+      background: transparent;
+    }
+
+    form {
+      display: flex;
+      padding: 8px;
+      border-top: 1px solid #ddd;
+      background: rgba(250,250,250,0.95);
+      gap: 6px;
+      align-items: center;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 8px;
+      font-size: 15px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    button.send-btn {
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: none;
+      background: #25D366;
+      color: white;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .attach-btn {
+      border: none;
+      background: transparent;
+      font-size: 22px;
+      padding: 4px;
+    }
+
+    .settings {
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.95);
+      font-size: 11px;
+      border-top: 1px solid #ddd;
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .settings label {
+      font-size: 11px;
+      min-width: 90px;
+    }
+    .settings input[type="color"] {
+      width: 32px;
+      height: 18px;
+      padding: 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .settings input[type="file"] {
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="header-left">
+        <div class="header-avatar" id="headerAvatar">C</div>
+        <div class="header-title">
+          <div class="name" id="roomNameLabel">Chat</div>
+          <div class="status" id="statusLabel">Ultimo accesso...</div>
+        </div>
+      </div>
+      <button id="callFromChatBtn">📞</button>
+    </header>
+
+    <div class="name-bar">
+      Il tuo nome:
+      <input id="nameInput" type="text" placeholder="Es. Mario">
+    </div>
+
+    <ul id="messages"></ul>
+    <div id="typing"></div>
+
+    <div class="emoji-bar">
+      <button type="button" class="emoji-btn">😀</button>
+      <button type="button" class="emoji-btn">😂</button>
+      <button type="button" class="emoji-btn">❤️</button>
+      <button type="button" class="emoji-btn">👍</button>
+    </div>
+
+    <form id="form">
+      <button type="button" id="attachBtn" class="attach-btn">📎</button>
+      <input id="fileInput" type="file" accept="image/*" style="display:none;">
+      <input id="input" type="text" placeholder="Scrivi un messaggio...">
+      <button type="submit" class="send-btn">Invia</button>
+    </form>
+
+    <div class="settings">
+      <div class="settings-row">
+        <label>Colore header</label>
+        <input type="color" id="colorHeader">
+        <label>Bg app</label>
+        <input type="color" id="colorApp">
+      </div>
+      <div class="settings-row">
+        <label>Msg miei</label>
+        <input type="color" id="colorMy">
+        <label>Msg altri</label>
+        <input type="color" id="colorOther">
+      </div>
+      <div class="settings-row">
+        <label>Sfondo (galleria)</label>
+        <input type="file" id="bgInput" accept="image/*">
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <script>
+    // ----- STANZA -----
+    const urlParams = new URLSearchParams(window.location.search);
+    const room = urlParams.get("room") || "generale";
+
+    // ----- FIREBASE -----
+    const firebaseConfig = {
+      apiKey: "AIzaSyDzrXe97__7ANwKu2Z5S-wHoOVNZrjpQN8",
+      authDomain: "chat-cimino.firebaseapp.com",
+      databaseURL: "https://chat-cimino-default-rtdb.firebaseio.com",
+      projectId: "chat-cimino",
+      storageBucket: "chat-cimino.firebasestorage.app",
+      messagingSenderId: "1069237537564",
+      appId: "1:1069237537564:web:c09ab62c809bd6d395c8d9"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const roomRef = db.ref("rooms/" + room);
+    const messagesRef = roomRef.child("messages");
+    const typingRef = roomRef.child("typing");
+    const presenceRef = roomRef.child("presence");
+
+    // ----- ELEMENTI -----
+    const appDiv = document.getElementById("app");
+    const roomNameLabel = document.getElementById("roomNameLabel");
+    const statusLabel = document.getElementById("statusLabel");
+    const headerAvatar = document.getElementById("headerAvatar");
+    const nameInput = document.getElementById("nameInput");
+    const messagesList = document.getElementById("messages");
+    const typingDiv = document.getElementById("typing");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const fileInput = document.getElementById("fileInput");
+    const attachBtn = document.getElementById("attachBtn");
+    const callFromChatBtn = document.getElementById("callFromChatBtn");
+
+    const colorHeader = document.getElementById("colorHeader");
+    const colorApp = document.getElementById("colorApp");
+    const colorMy = document.getElementById("colorMy");
+    const colorOther = document.getElementById("colorOther");
+    const bgInput = document.getElementById("bgInput");
+
+    // ----- UTIL -----
+    function getName() {
+      return nameInput.value.trim() || "Anonimo";
+    }
+    function nameKey(name) {
+      return (name || "").trim().replace(/\W/g, "_") || "Anonimo";
+    }
+    function initials(name) {
+      const parts = (name || "").trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+    function formatTime(ts) {
+      if (!ts) return "";
+      const d = new Date(ts);
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+    function formatLastSeen(ts) {
+      if (!ts) return "";
+      const d = new Date(ts);
+      return "Ultimo accesso: " + d.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+    }
+
+    // carico nome salvato
+    try {
+      const savedName = localStorage.getItem("chatNameDefault");
+      if (savedName) nameInput.value = savedName;
+    } catch(e){}
+    nameInput.addEventListener("change", () => {
+      try { localStorage.setItem("chatNameDefault", nameInput.value); } catch(e){}
+      headerAvatar.textContent = initials(getName());
+    });
+    headerAvatar.textContent = initials(getName());
+
+    // ----- META ROOM (nome stanza) -----
+    roomRef.child("meta").once("value").then(snap => {
+      const meta = snap.val() || {};
+      const displayName = meta.displayName || room;
+      roomNameLabel.textContent = displayName;
+      headerAvatar.textContent = initials(displayName);
+    });
+
+    // ----- THEME -----
+    const DEFAULT_THEME = {
+      header: "#075E54",
+      app: "#e5ddd5",
+      my: "#dcf8c6",
+      other: "#ffffff",
+      bgImage: null
+    };
+    function loadTheme() {
+      try {
+        const saved = localStorage.getItem("chatThemeV3");
+        if (!saved) return DEFAULT_THEME;
+        const parsed = JSON.parse(saved);
+        return Object.assign({}, DEFAULT_THEME, parsed);
+      } catch(e){ return DEFAULT_THEME; }
+    }
+    function applyTheme(t) {
+      document.documentElement.style.setProperty("--header-bg", t.header);
+      document.documentElement.style.setProperty("--app-bg", t.app);
+      document.documentElement.style.setProperty("--my-msg-bg", t.my);
+      document.documentElement.style.setProperty("--other-msg-bg", t.other);
+      colorHeader.value = t.header;
+      colorApp.value = t.app;
+      colorMy.value = t.my;
+      colorOther.value = t.other;
+      if (t.bgImage) appDiv.style.backgroundImage = "url('" + t.bgImage + "')";
+      else appDiv.style.backgroundImage = "none";
+    }
+    function saveTheme(t) {
+      localStorage.setItem("chatThemeV3", JSON.stringify(t));
+    }
+    let currentTheme = loadTheme();
+    applyTheme(currentTheme);
+    function updateTheme() {
+      currentTheme.header = colorHeader.value;
+      currentTheme.app = colorApp.value;
+      currentTheme.my = colorMy.value;
+      currentTheme.other = colorOther.value;
+      applyTheme(currentTheme);
+      saveTheme(currentTheme);
+    }
+    colorHeader.addEventListener("input", updateTheme);
+    colorApp.addEventListener("input", updateTheme);
+    colorMy.addEventListener("input", updateTheme);
+    colorOther.addEventListener("input", updateTheme);
+    bgInput.addEventListener("change", function() {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        currentTheme.bgImage = e.target.result;
+        applyTheme(currentTheme);
+        saveTheme(currentTheme);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ----- EMOJI -----
+    document.querySelectorAll(".emoji-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        input.value += btn.textContent;
+        input.focus();
+      });
+    });
+
+    // ----- ALLEGA FOTO -----
+    attachBtn.addEventListener("click", () => fileInput.click());
+
+    // ----- INVIO MESSAGGI -----
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const text = input.value.trim();
+      const file = fileInput.files[0];
+      if (!text && !file) return;
+
+      if (file) sendImageMessage(file, text);
+      else sendTextMessage(text);
+    });
+
+    function sendTextMessage(text) {
+      const msg = {
+        name: getName(),
+        type: "text",
+        text,
+        createdAt: Date.now()
+      };
+      const newRef = messagesRef.push(msg);
+      updateLastMessageMeta(msg);
+      markSeenForSelf(newRef.key);
+      input.value = "";
+    }
+
+    function sendImageMessage(file, caption) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const msg = {
+          name: getName(),
+          type: "image",
+          mediaData: e.target.result,
+          text: caption || "",
+          createdAt: Date.now()
+        };
+        const newRef = messagesRef.push(msg);
+        updateLastMessageMeta(msg);
+        markSeenForSelf(newRef.key);
+        input.value = "";
+        fileInput.value = "";
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateLastMessageMeta(msg) {
+      roomRef.child("meta/lastMessage").set({
+        from: msg.name,
+        text: msg.text || (msg.type === "image" ? "📷 Foto" : ""),
+        type: msg.type,
+        createdAt: msg.createdAt
+      });
+    }
+
+    // ----- RENDER MESSAGGI CON VISTO -----
+    function renderOrUpdateMessage(snapshot) {
+      const msg = snapshot.val();
+      const id = snapshot.key;
+      let row = messagesList.querySelector('.msg-row[data-id="'+id+'"]');
+      if (!row) {
+        row = document.createElement("li");
+        row.className = "msg-row";
+        row.dataset.id = id;
+        messagesList.appendChild(row);
+      }
+      row.innerHTML = "";
+      const isMe = msg.name === getName();
+      if (isMe) row.classList.add("me"); else row.classList.remove("me");
+
+      const avatar = document.createElement("div");
+      avatar.className = "msg-avatar";
+      avatar.textContent = initials(msg.name);
+
+      const bubble = document.createElement("div");
+      bubble.className = "msg-bubble";
+
+      const nameDiv = document.createElement("div");
+      nameDiv.className = "msg-name";
+      nameDiv.textContent = msg.name;
+      bubble.appendChild(nameDiv);
+
+      const textDiv = document.createElement("div");
+      textDiv.className = "msg-text";
+      textDiv.textContent = msg.text || "";
+      bubble.appendChild(textDiv);
+
+      if (msg.type === "image" && msg.mediaData) {
+        const img = document.createElement("img");
+        img.src = msg.mediaData;
+        img.className = "media";
+        bubble.appendChild(img);
+      }
+
+      const metaDiv = document.createElement("div");
+      metaDiv.className = "msg-meta";
+      const timeSpan = document.createElement("span");
+      timeSpan.textContent = formatTime(msg.createdAt);
+      metaDiv.appendChild(timeSpan);
+
+      if (isMe) {
+        const tickSpan = document.createElement("span");
+        tickSpan.className = "tick";
+        const seenBy = msg.seenBy || {};
+        const others = Object.keys(seenBy).filter(k => k !== nameKey(getName()));
+        tickSpan.textContent = others.length > 0 ? "✓✓" : "✓";
+        metaDiv.appendChild(tickSpan);
+      }
+
+      bubble.appendChild(metaDiv);
+
+      if (msg.reactions) {
+        const reactionsDiv = document.createElement("div");
+        reactionsDiv.className = "reactions";
+        Object.entries(msg.reactions).forEach(([emoji,count]) => {
+          const span = document.createElement("span");
+          span.textContent = emoji + " " + count;
+          reactionsDiv.appendChild(span);
+        });
+        bubble.appendChild(reactionsDiv);
+      }
+
+      const reactDiv = document.createElement("div");
+      reactDiv.className = "reaction-buttons";
+      ["👍","❤️","😂"].forEach(emoji => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = emoji;
+        btn.addEventListener("click", () => addReaction(id, emoji));
+        reactDiv.appendChild(btn);
+      });
+      bubble.appendChild(reactDiv);
+
+      if (isMe) {
+        row.appendChild(bubble);
+        row.appendChild(avatar);
+      } else {
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+      }
+
+      messagesList.scrollTop = messagesList.scrollHeight;
+    }
+
+    messagesRef.on("child_added", snap => {
+      renderOrUpdateMessage(snap);
+      // se non è mio, segno come visto
+      const msg = snap.val();
+      if (msg.name !== getName()) {
+        markSeenForSelf(snap.key);
+      }
+    });
+    messagesRef.on("child_changed", renderOrUpdateMessage);
+
+    function addReaction(messageId, emoji) {
+      const reactRef = messagesRef.child(messageId).child("reactions");
+      reactRef.transaction(current => {
+        current = current || {};
+        const count = current[emoji] || 0;
+        return Object.assign({}, current, { [emoji]: count + 1 });
+      });
+    }
+
+    // ----- STA SCRIVENDO -----
+    let typingTimeout;
+    input.addEventListener("input", () => {
+      const key = nameKey(getName());
+      typingRef.child(key).set(true);
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        typingRef.child(key).remove();
+      }, 1500);
+    });
+    typingRef.on("value", snap => {
+      const data = snap.val();
+      if (data) typingDiv.textContent = "Qualcuno sta scrivendo...";
+      else typingDiv.textContent = "";
+    });
+
+    // ----- ONLINE / ULTIMO ACCESSO -----
+    const myPresenceRef = presenceRef.child(nameKey(getName()));
+    function setOnline() {
+      myPresenceRef.set({online:true, lastSeen: firebase.database.ServerValue.TIMESTAMP});
+    }
+    function setOffline() {
+      myPresenceRef.set({online:false, lastSeen: firebase.database.ServerValue.TIMESTAMP});
+    }
+    window.addEventListener("focus", setOnline);
+    window.addEventListener("blur", setOffline);
+    window.addEventListener("beforeunload", setOffline);
+    setOnline();
+
+    // calcolo stato dagli altri utenti
+    presenceRef.on("value", snap => {
+      const data = snap.val() || {};
+      let anyOnline = false;
+      let lastSeenTs = 0;
+      Object.entries(data).forEach(([k,v]) => {
+        if (k === nameKey(getName())) return;
+        if (v.online) anyOnline = true;
+        if (v.lastSeen && v.lastSeen > lastSeenTs) lastSeenTs = v.lastSeen;
+      });
+      if (anyOnline) {
+        statusLabel.textContent = "Online";
+      } else if (lastSeenTs) {
+        statusLabel.textContent = formatLastSeen(lastSeenTs);
+      } else {
+        statusLabel.textContent = "Ultimo accesso sconosciuto";
+      }
+    });
+
+    // ----- VISTO (seenBy) -----
+    function markSeenForSelf(messageId) {
+      const key = nameKey(getName());
+      messagesRef.child(messageId).child("seenBy").child(key)
+        .set(firebase.database.ServerValue.TIMESTAMP);
+    }
+
+    // ----- PULSANTE CHIAMATA -----
+    callFromChatBtn.addEventListener("click", () => {
+      const url = "call.html?room=" + encodeURIComponent(room);
+      window.location.href = url;
+    });
+  </script>
+</body>
+</html>
