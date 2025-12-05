@@ -2,270 +2,162 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>La mia chat PRO</title>
+  <title>Le mie chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    :root {
-      --app-bg: #e5ddd5;
-      --header-bg: #075E54;
-      --my-msg-bg: #dcf8c6;
-      --other-msg-bg: #ffffff;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--app-bg);
+      background: #ece5dd;
     }
 
     .app {
       max-width: 600px;
       margin: 0 auto;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      background: rgba(240, 240, 240, 0.9);
+      background: #fff;
       border-left: 1px solid #bfbfbf;
       border-right: 1px solid #bfbfbf;
-      background-size: cover;
-      background-position: center;
     }
 
-    /* HEADER CON PULSANTE CHIAMATA */
     header {
-      padding: 8px 10px;
-      background: var(--header-bg);
-      color: white;
+      padding: 10px;
+      background: #075E54;
+      color: #fff;
       font-weight: 600;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
+
     header .title {
-      display: flex;
-      flex-direction: column;
-    }
-    header .title span {
-      font-size: 12px;
-      opacity: 0.8;
-      font-weight: 400;
-    }
-    #callFromChatBtn {
-      border: none;
-      background: #25d366;
-      color: white;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       font-size: 18px;
     }
 
-    .name-bar {
-      font-size: 12px;
-      padding: 4px 10px;
-      color: #555;
+    .new-chat {
+      padding: 8px 10px;
       border-bottom: 1px solid #ddd;
-      background: rgba(249, 249, 249, 0.95);
+      background: #f9f9f9;
+      display: flex;
+      gap: 6px;
     }
-    .name-bar input {
-      width: 100%;
-      padding: 6px;
-      font-size: 14px;
-      border-radius: 8px;
+    .new-chat input {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 16px;
       border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    .new-chat button {
+      border: none;
+      background: #25D366;
+      color: #fff;
+      border-radius: 16px;
+      padding: 6px 10px;
+      font-size: 14px;
+      font-weight: 600;
     }
 
-    #messages {
-      flex: 1;
+    ul#chatList {
       list-style: none;
       margin: 0;
-      padding: 10px;
+      padding: 0;
+      flex: 1;
       overflow-y: auto;
     }
-    #messages li {
-      max-width: 75%;
-      margin-bottom: 10px;
-      padding: 8px 10px;
-      border-radius: 12px;
-      background: var(--other-msg-bg);
-      word-wrap: break-word;
-      backdrop-filter: blur(2px);
-      font-size: 14px;
-    }
-    #messages li.me {
-      margin-left: auto;
-      background: var(--my-msg-bg);
-    }
-    #messages .time {
-      font-size: 10px;
-      color: #666;
-      margin-top: 4px;
-      text-align: right;
-    }
-    .media {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 4px;
-      display: block;
-    }
 
-    .reactions {
-      margin-top: 4px;
-      font-size: 14px;
-    }
-    .reactions span {
-      margin-right: 4px;
-    }
-    .reaction-buttons {
-      margin-top: 2px;
-      font-size: 14px;
-    }
-    .reaction-buttons button {
-      border: none;
-      background: transparent;
-      padding: 0 4px;
-      font-size: 16px;
-    }
-
-    #typing {
-      padding: 0 10px 4px 10px;
-      font-size: 12px;
-      color: #555;
-      min-height: 16px;
-    }
-
-    .emoji-bar {
-      padding: 4px 8px;
-      background: rgba(255,255,255,0.95);
-      border-top: 1px solid #ddd;
+    .chat-item {
+      padding: 10px;
       display: flex;
-      gap: 6px;
-    }
-    .emoji-bar button {
-      font-size: 20px;
-      border: none;
-      background: transparent;
-    }
-
-    form {
-      display: flex;
-      padding: 8px;
-      border-top: 1px solid #ddd;
-      background: rgba(250,250,250,0.95);
-      gap: 6px;
+      gap: 10px;
+      border-bottom: 1px solid #f0f0f0;
       align-items: center;
     }
-    input[type="text"] {
-      flex: 1;
-      padding: 8px;
-      font-size: 15px;
-      border-radius: 20px;
-      border: 1px solid #ccc;
-      outline: none;
+    .chat-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #128C7E;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 18px;
+      flex-shrink: 0;
     }
-    button.send-btn {
-      padding: 8px 14px;
-      border-radius: 20px;
-      border: none;
-      background: #25d366;
-      color: white;
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .chat-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-name {
       font-weight: 600;
       font-size: 15px;
     }
-    .attach-btn {
-      border: none;
-      background: transparent;
-      font-size: 22px;
-      padding: 4px;
+    .chat-time {
+      font-size: 11px;
+      color: #999;
+    }
+    .chat-preview-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+    .chat-preview {
+      font-size: 13px;
+      color: #555;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .chat-unread {
+      min-width: 18px;
+      min-height: 18px;
+      padding: 0 5px;
+      background: #25D366;
+      border-radius: 9px;
+      color: #fff;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
     }
 
-    .settings {
-      padding: 6px 10px;
-      background: rgba(255,255,255,0.95);
-      font-size: 11px;
-      border-top: 1px solid #ddd;
-    }
-    .settings-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 4px;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .settings label {
-      font-size: 11px;
-      min-width: 90px;
-    }
-    .settings input[type="color"] {
-      width: 32px;
-      height: 18px;
-      padding: 0;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    .settings input[type="file"] {
-      font-size: 11px;
+    .empty {
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
+      color: #777;
     }
   </style>
 </head>
-
 <body>
-  <div class="app" id="app">
+  <div class="app">
     <header>
-      <div class="title">
-        La mia chat
-        <span id="roomLabel"></span>
-      </div>
-      <button id="callFromChatBtn">📞</button>
+      <div class="title">La mia chat</div>
     </header>
 
-    <div class="name-bar">
-      Il tuo nome:
-      <input id="nameInput" type="text" placeholder="Es. Mario">
+    <div class="new-chat">
+      <input id="roomInput" type="text" placeholder="Nuova chat (es. Amici)">
+      <button id="createRoomBtn">Crea</button>
     </div>
 
-    <ul id="messages"></ul>
-    <div id="typing"></div>
-
-    <div class="emoji-bar">
-      <button type="button" class="emoji-btn">😀</button>
-      <button type="button" class="emoji-btn">😂</button>
-      <button type="button" class="emoji-btn">❤️</button>
-      <button type="button" class="emoji-btn">👍</button>
-    </div>
-
-    <form id="form">
-      <button type="button" id="attachBtn" class="attach-btn">📎</button>
-      <input id="fileInput" type="file" accept="image/*" style="display:none;">
-      <input id="input" type="text" placeholder="Scrivi un messaggio...">
-      <button type="submit" class="send-btn">Invia</button>
-    </form>
-
-    <div class="settings">
-      <div class="settings-row">
-        <label>Colore header</label>
-        <input type="color" id="colorHeader">
-        <label>Bg app</label>
-        <input type="color" id="colorApp">
-      </div>
-      <div class="settings-row">
-        <label>Msg miei</label>
-        <input type="color" id="colorMy">
-        <label>Msg altri</label>
-        <input type="color" id="colorOther">
-      </div>
-      <div class="settings-row">
-        <label>Sfondo (galleria)</label>
-        <input type="file" id="bgInput" accept="image/*">
-      </div>
-      <div style="font-size:10px;color:#777;margin-top:2px;">
-        (Evita immagini troppo grandi per sfondo e foto)
-      </div>
-    </div>
+    <ul id="chatList"></ul>
+    <div id="emptyState" class="empty">Nessuna chat. Crea una stanza sopra o aspetta messaggi.</div>
   </div>
 
   <!-- Firebase -->
@@ -273,13 +165,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
   <script>
-    // ----- STANZA -----
-    const params = new URLSearchParams(window.location.search);
-    const room = params.get("room") || "generale";
-    const roomLabel = document.getElementById("roomLabel");
-    roomLabel.textContent = "Stanza: " + room;
-
-    // ----- FIREBASE -----
     const firebaseConfig = {
       apiKey: "AIzaSyDzrXe97__7ANwKu2Z5S-wHoOVNZrjpQN8",
       authDomain: "chat-cimino.firebaseapp.com",
@@ -289,267 +174,119 @@
       messagingSenderId: "1069237537564",
       appId: "1:1069237537564:web:c09ab62c809bd6d395c8d9"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const messagesRef = db.ref("rooms/" + room + "/messages");
-    const typingRef = db.ref("rooms/" + room + "/typing");
+    const roomsRef = db.ref("rooms");
 
-    // ----- ELEMENTI BASE -----
-    const appDiv = document.getElementById("app");
-    const nameInput = document.getElementById("nameInput");
-    const messagesList = document.getElementById("messages");
-    const typingDiv = document.getElementById("typing");
-    const form = document.getElementById("form");
-    const input = document.getElementById("input");
-    const fileInput = document.getElementById("fileInput");
-    const attachBtn = document.getElementById("attachBtn");
-    const callFromChatBtn = document.getElementById("callFromChatBtn");
+    const chatList = document.getElementById("chatList");
+    const emptyState = document.getElementById("emptyState");
+    const roomInput = document.getElementById("roomInput");
+    const createRoomBtn = document.getElementById("createRoomBtn");
 
-    function getName() {
-      return nameInput.value.trim() || "Anonimo";
+    function roomInitials(name) {
+      const parts = name.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
     }
 
-    // salvataggio nome base (opzionale)
-    try {
-      const savedName = localStorage.getItem("chatNameDefault");
-      if (savedName) nameInput.value = savedName;
-    } catch(e){}
-    nameInput.addEventListener("change", () => {
-      try { localStorage.setItem("chatNameDefault", nameInput.value); } catch(e){}
-    });
-
-    // ----- TEMA / IMPOSTAZIONI -----
-    const colorHeader = document.getElementById("colorHeader");
-    const colorApp = document.getElementById("colorApp");
-    const colorMy = document.getElementById("colorMy");
-    const colorOther = document.getElementById("colorOther");
-    const bgInput = document.getElementById("bgInput");
-
-    const DEFAULT_THEME = {
-      header: "#075E54",
-      app: "#e5ddd5",
-      my: "#dcf8c6",
-      other: "#ffffff",
-      bgImage: null
-    };
-
-    function loadTheme() {
-      try {
-        const saved = localStorage.getItem("chatThemeV3");
-        if (!saved) return DEFAULT_THEME;
-        const parsed = JSON.parse(saved);
-        return Object.assign({}, DEFAULT_THEME, parsed);
-      } catch (e) {
-        return DEFAULT_THEME;
-      }
+    function formatTime(ts) {
+      if (!ts) return "";
+      const d = new Date(ts);
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
 
-    function applyTheme(theme) {
-      document.documentElement.style.setProperty("--header-bg", theme.header);
-      document.documentElement.style.setProperty("--app-bg", theme.app);
-      document.documentElement.style.setProperty("--my-msg-bg", theme.my);
-      document.documentElement.style.setProperty("--other-msg-bg", theme.other);
-
-      colorHeader.value = theme.header;
-      colorApp.value = theme.app;
-      colorMy.value = theme.my;
-      colorOther.value = theme.other;
-
-      if (theme.bgImage) {
-        appDiv.style.backgroundImage = "url('" + theme.bgImage + "')";
-      } else {
-        appDiv.style.backgroundImage = "none";
-      }
+    function updateEmptyState() {
+      emptyState.style.display = chatList.children.length ? "none" : "block";
     }
 
-    function saveTheme(theme) {
-      localStorage.setItem("chatThemeV3", JSON.stringify(theme));
-    }
+    // crea chat manualmente
+    createRoomBtn.addEventListener("click", () => {
+      const name = roomInput.value.trim();
+      if (!name) return;
+      const key = name.toLowerCase().replace(/\s+/g,"_");
 
-    let currentTheme = loadTheme();
-    applyTheme(currentTheme);
-
-    function updateTheme() {
-      currentTheme.header = colorHeader.value;
-      currentTheme.app = colorApp.value;
-      currentTheme.my = colorMy.value;
-      currentTheme.other = colorOther.value;
-      applyTheme(currentTheme);
-      saveTheme(currentTheme);
-    }
-
-    colorHeader.addEventListener("input", updateTheme);
-    colorApp.addEventListener("input", updateTheme);
-    colorMy.addEventListener("input", updateTheme);
-    colorOther.addEventListener("input", updateTheme);
-
-    bgInput.addEventListener("change", function () {
-      const file = this.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        currentTheme.bgImage = e.target.result;
-        applyTheme(currentTheme);
-        saveTheme(currentTheme);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // ----- EMOJI BAR -----
-    document.querySelectorAll(".emoji-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        input.value += btn.textContent;
-        input.focus();
-      });
-    });
-
-    // ----- ALLEGA FOTO -----
-    attachBtn.addEventListener("click", () => {
-      fileInput.click();
-    });
-
-    // ----- INVIO MESSAGGI -----
-    form.addEventListener("submit", e => {
-      e.preventDefault();
-      const text = input.value.trim();
-      const file = fileInput.files[0];
-
-      if (!text && !file) return;
-
-      if (file) {
-        sendImageMessage(file, text);
-      } else {
-        sendTextMessage(text);
-      }
-    });
-
-    function sendTextMessage(text) {
-      const msg = {
-        name: getName(),
-        type: "text",
-        text: text,
+      roomsRef.child(key).child("meta").update({
+        displayName: name,
         createdAt: Date.now()
-      };
-      messagesRef.push(msg);
-      input.value = "";
-    }
+      });
 
-    function sendImageMessage(file, caption) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const msg = {
-          name: getName(),
-          type: "image",
-          mediaData: e.target.result,
-          text: caption || "",
-          createdAt: Date.now()
-        };
-        messagesRef.push(msg);
-        input.value = "";
-        fileInput.value = "";
-      };
-      reader.readAsDataURL(file);
-    }
+      roomInput.value = "";
+    });
 
-    // ----- RENDER MESSAGGI (CON REACTION) -----
-    function renderOrUpdateMessage(snapshot) {
-      const msg = snapshot.val();
-      const id = snapshot.key;
+    // mostro tutte le room che hanno meta
+    roomsRef.on("child_added", snap => {
+      const roomKey = snap.key;
+      const metaRef = roomsRef.child(roomKey).child("meta");
 
-      let li = messagesList.querySelector('li[data-id="' + id + '"]');
-      if (!li) {
-        li = document.createElement("li");
-        li.dataset.id = id;
-        messagesList.appendChild(li);
-      }
-      li.innerHTML = "";
+      const li = document.createElement("li");
+      li.className = "chat-item";
+      li.dataset.room = roomKey;
+      li.addEventListener("click", () => {
+        const url = "chat.html?room=" + encodeURIComponent(roomKey);
+        window.location.href = url;
+      });
 
-      if (msg.name === getName()) {
-        li.classList.add("me");
-      } else {
-        li.classList.remove("me");
-      }
+      const avatarDiv = document.createElement("div");
+      avatarDiv.className = "chat-avatar";
+      avatarDiv.textContent = roomInitials(roomKey);
 
-      const textDiv = document.createElement("div");
-      if (msg.type === "image" && msg.mediaData) {
-        textDiv.textContent = msg.name + ": " + (msg.text || "");
-        li.appendChild(textDiv);
+      const mainDiv = document.createElement("div");
+      mainDiv.className = "chat-main";
 
-        const img = document.createElement("img");
-        img.src = msg.mediaData;
-        img.className = "media";
-        li.appendChild(img);
-      } else {
-        textDiv.textContent = msg.name + ": " + (msg.text || "");
-        li.appendChild(textDiv);
-      }
+      const titleRow = document.createElement("div");
+      titleRow.className = "chat-title-row";
+
+      const nameDiv = document.createElement("div");
+      nameDiv.className = "chat-name";
+      titleRow.appendChild(nameDiv);
 
       const timeDiv = document.createElement("div");
-      timeDiv.className = "time";
-      const d = new Date(msg.createdAt || Date.now());
-      timeDiv.textContent = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      li.appendChild(timeDiv);
+      timeDiv.className = "chat-time";
+      titleRow.appendChild(timeDiv);
 
-      if (msg.reactions) {
-        const reactionsDiv = document.createElement("div");
-        reactionsDiv.className = "reactions";
-        Object.entries(msg.reactions).forEach(([emoji, count]) => {
-          const span = document.createElement("span");
-          span.textContent = emoji + " " + count;
-          reactionsDiv.appendChild(span);
-        });
-        li.appendChild(reactionsDiv);
-      }
+      const previewRow = document.createElement("div");
+      previewRow.className = "chat-preview-row";
 
-      const reactDiv = document.createElement("div");
-      reactDiv.className = "reaction-buttons";
-      ["👍", "❤️", "😂"].forEach(emoji => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = emoji;
-        btn.addEventListener("click", () => addReaction(id, emoji));
-        reactDiv.appendChild(btn);
+      const previewDiv = document.createElement("div");
+      previewDiv.className = "chat-preview";
+      previewRow.appendChild(previewDiv);
+
+      const unreadSpan = document.createElement("span");
+      unreadSpan.className = "chat-unread";
+      unreadSpan.style.display = "none";
+      previewRow.appendChild(unreadSpan);
+
+      mainDiv.appendChild(titleRow);
+      mainDiv.appendChild(previewRow);
+
+      li.appendChild(avatarDiv);
+      li.appendChild(mainDiv);
+      chatList.appendChild(li);
+      updateEmptyState();
+
+      // aggiorna nome / ultimo messaggio
+      metaRef.on("value", msnap => {
+        const meta = msnap.val() || {};
+        nameDiv.textContent = meta.displayName || roomKey;
+        avatarDiv.textContent = roomInitials(meta.displayName || roomKey);
+        if (meta.lastMessage) {
+          const lm = meta.lastMessage;
+          const prefix = lm.from ? (lm.from + ": ") : "";
+          previewDiv.textContent = prefix + (lm.text || lm.type || "");
+          timeDiv.textContent = formatTime(lm.createdAt);
+        }
       });
-      li.appendChild(reactDiv);
 
-      messagesList.scrollTop = messagesList.scrollHeight;
-    }
-
-    messagesRef.on("child_added", renderOrUpdateMessage);
-    messagesRef.on("child_changed", renderOrUpdateMessage);
-
-    function addReaction(messageId, emoji) {
-      const reactRef = messagesRef.child(messageId).child("reactions");
-      reactRef.transaction(current => {
-        current = current || {};
-        const currentCount = current[emoji] || 0;
-        return Object.assign({}, current, { [emoji]: currentCount + 1 });
+      // contatore "finto" non letti: numero messaggi totali
+      roomsRef.child(roomKey).child("messages").on("value", vsnap => {
+        const count = vsnap.numChildren();
+        if (count > 0) {
+          unreadSpan.style.display = "inline-flex";
+          unreadSpan.textContent = count;
+        } else {
+          unreadSpan.style.display = "none";
+        }
       });
-    }
-
-    // ----- "STA SCRIVENDO" -----
-    let typingTimeout;
-    input.addEventListener("input", () => {
-      const key = getName().replace(/\W/g, "_");
-      typingRef.child(key).set(true);
-
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => {
-        typingRef.child(key).remove();
-      }, 1500);
-    });
-
-    typingRef.on("value", snap => {
-      const data = snap.val();
-      if (data) typingDiv.textContent = "Qualcuno sta scrivendo...";
-      else typingDiv.textContent = "";
-    });
-
-    // ----- PULSANTE CHIAMATA DALLA CHAT -----
-    callFromChatBtn.addEventListener("click", () => {
-      const url = "call.html?room=" + encodeURIComponent(room);
-      window.location.href = url;
     });
   </script>
 </body>
