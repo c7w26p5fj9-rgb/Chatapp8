@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Chiamata vocale</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #064e3b;
+      color: #fff;
+    }
+    .screen {
+      max-width: 600px;
+      margin: 0 auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px 20px;
+      box-sizing: border-box;
+      text-align: center;
+      background: radial-gradient(circle at top, #128C7E, #064e3b);
+    }
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .room-name {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+    .status {
+      margin-top: 20px;
+      font-size: 16px;
+      min-height: 40px;
+    }
+    .timer {
+      font-size: 18px;
+      margin-top: 8px;
+    }
+    .avatar {
+      margin-top: 40px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #0f766e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: 600;
+      border: 3px solid rgba(255,255,255,0.4);
+    }
+    .name-input {
+      margin-top: 20px;
+    }
+    .name-input input {
+      padding: 8px 10px;
+      border-radius: 20px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      width: 80%;
+      max-width: 260px;
+      text-align: center;
+    }
+    .buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-call {
+      background: #25D366;
+      color: #fff;
+    }
+    .btn-answer {
+      background: #10B981;
+      color: #fff;
+    }
+    .btn-end {
+      background: #EF4444;
+      color: #fff;
+    }
+    .btn-disabled {
+      opacity: 0.5;
+    }
+    .small {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 10px;
+    }
+    audio {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div>
+      <h1>Chiamata vocale</h1>
+      <div class="room-name" id="roomLabel"></div>
+      <div class="status" id="statusText">Imposta il tuo nome e premi "Chiama"</div>
+      <div class="timer" id="timerText"></div>
+    </div>
+
+    <div class="avatar" id="avatar">
+      📞
+    </div>
+
+    <div class="name-input">
+      <input id="nameInput" type="text" placeholder="Il tuo nome (es. Mario)">
+    </div>
+
+    <div class="buttons">
+      <button id="callBtn" class="btn btn-call">📞 Chiama</button>
+      <button id="answerBtn" class="btn btn-answer btn-disabled" disabled>✅ Rispondi</button>
+      <button id="endBtn" class="btn btn-end btn-disabled" disabled>🔴 Termina</button>
+    </div>
+
+    <div class="small">
+      Apri <strong>lo stesso link</strong> su due telefoni (stessa stanza)<br>
+      Uno preme <strong>Chiama</strong>, l'altro vede <strong>Rispondi</strong>.
+    </div>
+  </div>
+
+  <audio id="localAudio" autoplay muted></audio>
+  <audio id="remoteAudio" autoplay></audio>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <script>
+    // ====== PARAMETRI STANZA ======
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get("room") || "generale";
+    document.getElementById("roomLabel").textContent = "Stanza: " + room;
+
+    // ====== FIREBASE CONFIG (STESSO DELLA CHAT) ======
+    const firebaseConfig = {
+      apiKey: "AIzaSyDzrXe97__7ANwKu2Z5S-wHoOVNZrjpQN8",
+      authDomain: "chat-cimino.firebaseapp.com",
+      databaseURL: "https://chat-cimino-default-rtdb.firebaseio.com",
+      projectId: "chat-cimino",
+      storageBucket: "chat-cimino.firebasestorage.app",
+      messagingSenderId: "1069237537564",
+      appId: "1:1069237537564:web:c09ab62c809bd6d395c8d9"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const callRef = db.ref("calls/" + room);
+
+    // ====== ELEMENTI UI ======
+    const statusText = document.getElementById("statusText");
+    const timerText = document.getElementById("timerText");
+    const nameInput = document.getElementById("nameInput");
+    const callBtn = document.getElementById("callBtn");
+    const answerBtn = document.getElementById("answerBtn");
+    const endBtn = document.getElementById("endBtn");
+    const avatar = document.getElementById("avatar");
+    const localAudio = document.getElementById("localAudio");
+    const remoteAudio = document.getElementById("remoteAudio");
+
+    let pc = null;
+    let localStream = null;
+    let isCaller = false;
+    let callTimerInterval = null;
+    let callStartTime = null;
+
+    function getName() {
+      return nameInput.value.trim() || "Anonimo";
+    }
+
+    // ====== TIMER ======
+    function startTimer() {
+      callStartTime = Date.now();
+      callTimerInterval = setInterval(() => {
+        const diff = Math.floor((Date.now() - callStartTime) / 1000);
+        const m = String(Math.floor(diff / 60)).padStart(2, "0");
+        const s = String(diff % 60).padStart(2, "0");
+        timerText.textContent = m + ":" + s;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (callTimerInterval) clearInterval(callTimerInterval);
+      timerText.textContent = "";
+    }
+
+    // ====== UI STATE ======
+    function setStatus(text) {
+      statusText.textContent = text;
+    }
+
+    function enableButton(btn, enabled) {
+      btn.disabled = !enabled;
+      if (enabled) {
+        btn.classList.remove("btn-disabled");
+      } else {
+        btn.classList.add("btn-disabled");
+      }
+    }
+
+    function resetCallUI() {
+      enableButton(callBtn, true);
+      enableButton(answerBtn, false);
+      enableButton(endBtn, false);
+      setStatus('Pronto per una chiamata.');
+      avatar.textContent = "📞";
+      stopTimer();
+    }
+
+    // ====== WEBRTC SETUP ======
+    const iceConfig = {
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" }
+      ]
+    };
+
+    async function createPeerConnection() {
+      pc = new RTCPeerConnection(iceConfig);
+
+      pc.onicecandidate = event => {
+        if (event.candidate) {
+          const candRef = callRef.child(isCaller ? "callerCandidates" : "calleeCandidates");
+          candRef.push(event.candidate.toJSON());
+        }
+      };
+
+      pc.ontrack = event => {
+        remoteAudio.srcObject = event.streams[0];
+      };
+
+      if (!localStream) {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localAudio.srcObject = localStream;
+      }
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    }
+
+    // ====== AVVIO CHIAMATA (CALLER) ======
+    callBtn.addEventListener("click", async () => {
+      try {
+        isCaller = true;
+        enableButton(callBtn, false);
+        enableButton(answerBtn, false);
+        enableButton(endBtn, true);
+
+        setStatus("Sto chiamando...");
+        avatar.textContent = getInitials(getName());
+
+        await createPeerConnection();
+
+        // Pulisco eventuali dati vecchi
+        await callRef.set(null);
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        await callRef.child("offer").set({
+          type: offer.type,
+          sdp: offer.sdp,
+          from: getName()
+        });
+
+        await callRef.child("status").set("calling");
+
+        // Ascolto answer
+        callRef.child("answer").on("value", async snapshot => {
+          const answer = snapshot.val();
+          if (!answer || !pc || pc.currentRemoteDescription) return;
+          await pc.setRemoteDescription(new RTCSessionDescription(answer));
+          setStatus("In chiamata con " + (answer.from || "l'altro utente"));
+          startTimer();
+        });
+
+        // ICE candidates dall'altro lato
+        callRef.child("calleeCandidates").on("child_added", snapshot => {
+          const data = snapshot.val();
+          if (data && pc) pc.addIceCandidate(new RTCIceCandidate(data));
+        });
+
+        // Stato "ended"
+        callRef.child("status").on("value", snapshot => {
+          if (snapshot.val() === "ended") {
+            endCallLocal("Chiamata terminata dall'altro utente");
+          }
+        });
+
+      } catch (err) {
+        console.error(err);
+        setStatus("Errore nella chiamata: " + err.message);
+        resetCallUI();
+      }
+    });
+
+    // ====== RICEZIONE CHIAMATA (CALLEE) ======
+    // Ascolto se arriva un'offerta
+    callRef.child("offer").on("value", snapshot => {
+      const offer = snapshot.val();
+      if (!offer) {
+        // Nessuna chiamata in corso
+        return;
+      }
+      if (!isCaller) {
+        // Sono il lato che risponde
+        setStatus("Chiamata in arrivo da " + (offer.from || "utente"));
+        enableButton(answerBtn, true);
+        avatar.textContent = getInitials(offer.from || "U");
+      }
+    });
+
+    answerBtn.addEventListener("click", async () => {
+      try {
+        isCaller = false;
+        enableButton(answerBtn, false);
+        enableButton(callBtn, false);
+        enableButton(endBtn, true);
+
+        setStatus("Connessione in corso...");
+        avatar.textContent = getInitials(getName());
+
+        await createPeerConnection();
+
+        // Leggo l'offerta
+        const offerSnap = await callRef.child("offer").get();
+        const offer = offerSnap.val();
+        if (!offer) {
+          setStatus("Nessuna chiamata trovata.");
+          resetCallUI();
+          return;
+        }
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        await callRef.child("answer").set({
+          type: answer.type,
+          sdp: answer.sdp,
+          from: getName()
+        });
+
+        await callRef.child("status").set("in-call");
+
+        // ICE dal caller
+        callRef.child("callerCandidates").on("child_added", snapshot => {
+          const data = snapshot.val();
+          if (data && pc) pc.addIceCandidate(new RTCIceCandidate(data));
+        });
+
+        // Stato ended
+        callRef.child("status").on("value", snapshot => {
+          if (snapshot.val() === "ended") {
+            endCallLocal("Chiamata terminata dall'altro utente");
+          }
+        });
+
+        startTimer();
+        setStatus("In chiamata...");
+
+      } catch (err) {
+        console.error(err);
+        setStatus("Errore nel rispondere: " + err.message);
+        resetCallUI();
+      }
+    });
+
+    // ====== TERMINE CHIAMATA ======
+    endBtn.addEventListener("click", async () => {
+      await endCallRemote("Chiamata terminata");
+    });
+
+    async function endCallRemote(msg) {
+      if (callRef) {
+        await callRef.child("status").set("ended");
+        // non cancello subito offer/answer per evitare problemi, ma si può fare
+      }
+      endCallLocal(msg);
+    }
+
+    function endCallLocal(msg) {
+      setStatus(msg || "Chiamata terminata");
+      stopTimer();
+      if (pc) {
+        pc.close();
+        pc = null;
+      }
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      enableButton(endBtn, false);
+      enableButton(callBtn, true);
+      enableButton(answerBtn, false);
+      avatar.textContent = "📞";
+    }
+
+    // ====== UTILITY ======
+    function getInitials(name) {
+      const parts = name.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+
+    // Metto un nome di default se c'era in localStorage (opzionale)
+    try {
+      const savedName = localStorage.getItem("chatNameDefault");
+      if (savedName) nameInput.value = savedName;
+    } catch (e) {}
+
+    nameInput.addEventListener("change", () => {
+      try {
+        localStorage.setItem("chatNameDefault", nameInput.value);
+      } catch (e) {}
+    });
+  </script>
+</body>
+</html>
