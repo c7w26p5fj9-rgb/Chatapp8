@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Chat PRO (emoji + foto/video)</title>
+  <title>Chat PRO (emoji + foto)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
@@ -97,10 +97,7 @@
       max-width: 100%;
       border-radius: 8px;
       margin-top: 4px;
-    }
-
-    video.media {
-      max-height: 200px;
+      display: block;
     }
 
     .reactions {
@@ -236,7 +233,8 @@
 
     <form id="form">
       <label for="fileInput" class="attach-label">📎</label>
-      <input id="fileInput" type="file" accept="image/*,video/*" style="display:none">
+      <!-- SOLO FOTO -->
+      <input id="fileInput" type="file" accept="image/*" style="display:none">
       <input id="input" type="text" placeholder="Scrivi un messaggio...">
       <button type="submit" class="send-btn">Invia</button>
     </form>
@@ -259,7 +257,7 @@
         <input type="file" id="bgInput" accept="image/*">
       </div>
       <div style="font-size:10px;color:#777;margin-top:2px;">
-        (Foto/video e sfondo vengono salvati solo per test, non per file molto grandi)
+        (Foto e sfondo vengono salvati solo per test, evita file troppo grandi)
       </div>
     </div>
   </div>
@@ -389,14 +387,16 @@
       });
     });
 
-    // ----- INVIO TESTO -----
+    // ----- INVIO MESSAGGI -----
     form.addEventListener("submit", e => {
       e.preventDefault();
       const text = input.value.trim();
-      if (!text && !fileInput.files[0]) return;
+      const file = fileInput.files[0];
 
-      if (fileInput.files[0]) {
-        sendMediaMessage(fileInput.files[0], text);
+      if (!text && !file) return;
+
+      if (file) {
+        sendImageMessage(file, text);
       } else {
         sendTextMessage(text);
       }
@@ -413,15 +413,13 @@
       input.value = "";
     }
 
-    function sendMediaMessage(file, caption) {
+    function sendImageMessage(file, caption) {
       const reader = new FileReader();
       reader.onload = function (e) {
         const dataUrl = e.target.result;
-        const isVideo = file.type.startsWith("video/");
         const msg = {
           name: getName(),
-          type: "media",
-          mediaType: isVideo ? "video" : "image",
+          type: "image",
           mediaData: dataUrl,
           text: caption || "",
           createdAt: Date.now()
@@ -433,7 +431,6 @@
       reader.readAsDataURL(file);
     }
 
-    // clic sul 📎 apre la scelta file
     document.querySelector(".attach-label").addEventListener("click", () => {
       fileInput.click();
     });
@@ -456,25 +453,16 @@
         li.classList.remove("me");
       }
 
-      // contenuto
       const textDiv = document.createElement("div");
-      if (msg.type === "media" && msg.mediaData) {
-        if (msg.mediaType === "image") {
-          const img = document.createElement("img");
-          img.src = msg.mediaData;
-          img.className = "media";
-          textDiv.textContent = msg.name + ": " + (msg.text || "");
-          li.appendChild(textDiv);
-          li.appendChild(img);
-        } else {
-          const vid = document.createElement("video");
-          vid.src = msg.mediaData;
-          vid.className = "media";
-          vid.controls = true;
-          textDiv.textContent = msg.name + ": " + (msg.text || "");
-          li.appendChild(textDiv);
-          li.appendChild(vid);
-        }
+
+      if (msg.type === "image" && msg.mediaData) {
+        textDiv.textContent = msg.name + ": " + (msg.text || "");
+        li.appendChild(textDiv);
+
+        const img = document.createElement("img");
+        img.src = msg.mediaData;
+        img.className = "media";
+        li.appendChild(img);
       } else {
         textDiv.textContent = msg.name + ": " + (msg.text || "");
         li.appendChild(textDiv);
